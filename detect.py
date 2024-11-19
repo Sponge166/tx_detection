@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import csv
 import pandas
 
 def threshold(spectrogram, p):
@@ -9,26 +8,27 @@ def threshold(spectrogram, p):
     thresholded_spectrogram = np.zeros((rows, columns))
     for i in range(rows):
         for j in range(columns):
-            if spectrogram[i][j] < p: #adjust threshold
-                thresholded_spectrogram[i][j]  = 0.0
+            if spectrogram[i,j] < p: #adjust threshold
+                thresholded_spectrogram[i][j] = 0.0
             else:
-                thresholded_spectrogram[i][j]  = 1.0
+                thresholded_spectrogram[i][j] = 1.0
     return thresholded_spectrogram
 
 def calc_probability(thresholded_spectrogram):
     rows = thresholded_spectrogram.shape[0]
     columns = thresholded_spectrogram.shape[1]
-    tx_time_prob = np.zeros(rows)
-    for i in range(rows):
-        tx_time_prob[i] = sum(thresholded_spectrogram[i])/len(thresholded_spectrogram[i])
+
+    # tx_time_prob = np.zeros(rows)
+    # for i in range(rows):
+    #     tx_time_prob[i] = sum(thresholded_spectrogram[i])/len(thresholded_spectrogram[i])
 
     tx_freq_prob = np.zeros(columns)
     for i in range(columns):
         tx_freq_prob[i] = sum(thresholded_spectrogram[:,i])/len(thresholded_spectrogram[:,i])
 
-    probability_matrix  = np.outer(tx_time_prob, tx_freq_prob)
+    # probability_matrix  = np.outer(tx_time_prob, tx_freq_prob)
 
-    return tx_freq_prob, tx_time_prob, probability_matrix
+    return tx_freq_prob #, tx_time_prob, probability_matrix
 
 def choose_initial_thresh(spectrogram):
     low = np.min(spectrogram)
@@ -48,52 +48,13 @@ def calc_initial_thresh(spectrogram, threshes):
     for thresh in threshes: 
         threshed = threshold(spectrogram, thresh)
 
-        tx_freq_prob, tx_time_prob, probability_matrix = calc_probability(threshed)
-
+        tx_freq_prob = calc_probability(threshed)
         max_freq_diff = calc_max_diff(tx_freq_prob)
-        max_time_diff = calc_max_diff(tx_time_prob)
 
-        max_diffs.append((max_freq_diff, max_time_diff, thresh))
+        max_diffs.append((max_freq_diff, thresh))
 
-        # print(max_diffs[-1], thresh)
-
-        # fig = plt.figure()
-        # ax1 = fig.add_subplot(221)
-        # plt.plot(tx_freq_prob)
-        # plt.title("freq or time prob")
-        # plt.xlabel("freq bins or time")
-        # plt.ylabel("Tx Probability")
-
-        # ax2 = fig.add_subplot(222)
-        # plt.plot(tx_time_prob)
-        # plt.title("freq or time prob")
-        # plt.xlabel("freq bins or time")
-        # plt.ylabel("Tx Probability")
-
-        # ax3 = fig.add_subplot(223)
-        # plt.imshow(probability_matrix, cmap=plt.cm.spring, aspect='auto')
-        # plt.xlabel("Frequency [MHz]")
-        # plt.ylabel("Time [ms]")
-
-        # ax4 = fig.add_subplot(224)
-        # plt.imshow(threshed, cmap=plt.cm.spring, aspect='auto')
-        # plt.xlabel("Frequency [MHz]")
-        # plt.ylabel("Time [ms]")
-        # plt.show()
-
-
-    freq_diffs = [x[0] for x in max_diffs]
-    time_diffs = [x[1] for x in max_diffs]
-
-    max_freq_diff = max(zip(freq_diffs, threshes))
-    max_time_diff = max(zip(time_diffs, threshes))
-
-    if max_freq_diff[1] > max_time_diff[1]: # choose higher thresh
-        init_thresh = max_freq_diff[1]
-    else:
-        init_thresh = max_time_diff[1]
-
-    return init_thresh 
+    max_freq_diff = max(max_diffs)[1]
+    return max_freq_diff
 
 # this section definitely needs some work
 
@@ -121,37 +82,58 @@ def find_highest_thresh_of_highest_normalized_rate_sum(vec):
     sum_of_abs_rates = [x[1] for x in results]
     normalized_abs_rate_sums = [x[0]/x[1] if x[1]!=0 else 0 for x in zip(sum_of_abs_rates, intersections)]
     
-    fig = plt.figure()
-    ax1 = fig.add_subplot(221)
-    plt.plot(vec)
-    plt.title("freq or time prob")
-    plt.xlabel("freq bins or time")
-    plt.ylabel("Tx Probability")
+    # fig = plt.figure()
+    # ax1 = fig.add_subplot(221)
+    # plt.plot(vec)
+    # plt.title("freq or time prob")
+    # plt.xlabel("freq bins or time")
+    # plt.ylabel("Tx Probability")
 
-    ax2 = fig.add_subplot(222)
-    plt.plot(threshes, intersections)
-    plt.title("intersections vs threshold")
-    plt.xlabel("threshold")
-    plt.ylabel("intersections")
+    # ax2 = fig.add_subplot(222)
+    # plt.plot(threshes, intersections)
+    # plt.title("intersections vs threshold")
+    # plt.xlabel("threshold")
+    # plt.ylabel("intersections")
 
-    ax3 = fig.add_subplot(223)
-    plt.plot(threshes, sum_of_abs_rates)
-    plt.title("∑|(yk2-yk1)| vs threshold")
-    plt.xlabel("threshold")
-    plt.ylabel("∑|(yk2-yk1)|")
+    # ax3 = fig.add_subplot(223)
+    # plt.plot(threshes, sum_of_abs_rates)
+    # plt.title("∑|(yk2-yk1)| vs threshold")
+    # plt.xlabel("threshold")
+    # plt.ylabel("∑|(yk2-yk1)|")
 
-    ax4 = fig.add_subplot(224)
-    plt.plot(threshes, normalized_abs_rate_sums)
-    plt.title("∑|(yk2-yk1)| / intersections vs threshold")
-    plt.xlabel("threshold")
-    plt.ylabel("∑|(yk2-yk1)| / intersections")
+    # ax4 = fig.add_subplot(224)
+    # plt.plot(threshes, normalized_abs_rate_sums)
+    # plt.title("∑|(yk2-yk1)| / intersections vs threshold")
+    # plt.xlabel("threshold")
+    # plt.ylabel("∑|(yk2-yk1)| / intersections")
 
-    plt.show()
+    # plt.show()
 
     thresh = max(zip(threshes, normalized_abs_rate_sums), key=lambda x: (x[1], x[0])) [0]
     # print(thresh)
 
     return thresh
+
+### atom section ###
+
+def get_freq_atom(tx_freq_prob):
+    dx = [tx_freq_prob[i] - tx_freq_prob[i-1] for i in range(1, len(tx_freq_prob))]
+    sorted_dx = sorted(dx)
+    left = sorted_dx[-1]
+    right = sorted_dx[0]
+    left_idx = dx.index(left) + 1
+    right_idx = dx.index(right) + 1
+
+    atom = np.zeros(len(tx_freq_prob))
+    for i in range(left_idx, right_idx):
+        atom[i] = 1
+
+    return atom
+
+def calc_cos_sim(v1, v2):
+    return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+
+### atom section ###
 
 def remove_detection(spectrogram, detection, nf_mean=None, nf_std_dev=None):
     # I should probably try to adopt some sort of masking like SCAN did on subsequent iterations
@@ -189,48 +171,72 @@ def detect(spectrogram, nf_mean=None, nf_std_dev=None):
     goods = []
 
     while True:
-        if stopping_condition():
-            break
+        # if stopping_condition():
+        #     break
     
         p = choose_initial_thresh(spectrogram)
         thresholded_spectrogram = threshold(spectrogram, p)
-        tx_freq_prob, tx_time_prob, probability_matrix = calc_probability(thresholded_spectrogram)
-        freq_prob_thresh = choose_prob_thresh(tx_freq_prob)
-        time_prob_thresh = choose_prob_thresh(tx_time_prob)
-        prob_thresh = freq_prob_thresh * time_prob_thresh
-        thresholded_prob_matrix = threshold(probability_matrix, prob_thresh)
+        tx_freq_prob = calc_probability(thresholded_spectrogram)
+
+        freq_atom = get_freq_atom(tx_freq_prob)
+
+        cos_sims = []
+        for time_slice in spectrogram:
+            cos_sims.append(calc_cos_sim(freq_atom, time_slice))
+
+        cos_thresh = choose_prob_thresh(cos_sims)
+        time_atom = [1 if x >= cos_thresh else 0 for x in cos_sims]
+
+        detection = np.outer(time_atom, freq_atom)
 
         fig = plt.figure()
         ax1 = fig.add_subplot(221)
-        plt.imshow(spectrogram, cmap=plt.cm.spring, aspect='auto')
-        plt.xlabel("Frequency [MHz]")
-        plt.ylabel("Time [ms]")
-        
+        plt.plot(cos_sims)
+        plt.axhline(y=cos_thresh, color='r', linestyle='-')
+
         ax2 = fig.add_subplot(222)
-        plt.plot(tx_freq_prob)
-        plt.axhline(y=freq_prob_thresh, color='r', linestyle='-')
-        plt.title("freq prob")
-        plt.xlabel("freq bins")
-        plt.ylabel("Tx Probability")
-        
+        plt.imshow(detection, cmap=plt.cm.spring, aspect='auto')
+
         ax3 = fig.add_subplot(223)
-        plt.plot(tx_time_prob)
-        plt.axhline(y=time_prob_thresh, color='r', linestyle='-')
-        plt.title("time prob")
-        plt.xlabel("Time [ms]")
-        plt.ylabel("Tx Probability")
-        
+        plt.plot(freq_atom)
+
         ax4 = fig.add_subplot(224)
-        plt.imshow(thresholded_prob_matrix, cmap=plt.cm.spring, aspect='auto')
-        plt.xlabel("Frequency [MHz]")
-        plt.ylabel("Time [ms]")
+        plt.imshow(spectrogram, cmap=plt.cm.spring, aspect='auto')
         plt.show()
+
+        return detection
+
+        # fig = plt.figure()
+        # ax1 = fig.add_subplot(221)
+        # plt.imshow(spectrogram, cmap=plt.cm.spring, aspect='auto')
+        # plt.xlabel("Frequency [MHz]")
+        # plt.ylabel("Time [ms]")
+        
+        # ax2 = fig.add_subplot(222)
+        # plt.plot(tx_freq_prob)
+        # plt.axhline(y=freq_prob_thresh, color='r', linestyle='-')
+        # plt.title("freq prob")
+        # plt.xlabel("freq bins")
+        # plt.ylabel("Tx Probability")
+        
+        # ax3 = fig.add_subplot(223)
+        # plt.plot(tx_time_prob)
+        # plt.axhline(y=time_prob_thresh, color='r', linestyle='-')
+        # plt.title("time prob")
+        # plt.xlabel("Time [ms]")
+        # plt.ylabel("Tx Probability")
+        
+        # ax4 = fig.add_subplot(224)
+        # plt.imshow(thresholded_prob_matrix, cmap=plt.cm.spring, aspect='auto')
+        # plt.xlabel("Frequency [MHz]")
+        # plt.ylabel("Time [ms]")
+        # plt.show()
 
         # prev_detection = thresholded_prob_matrix
 
         if input("should we keep this iteration? [y/n]: ").lower() == "y":
-            goods.append(thresholded_prob_matrix)
-        spectrogram = remove_detection(spectrogram, thresholded_prob_matrix, nf_mean, nf_std_dev)
+            goods.append(detection)
+        spectrogram = remove_detection(spectrogram, detection, nf_mean, nf_std_dev)
     
     summ = np.zeros(goods[0].shape)
     for good in goods:
@@ -276,54 +282,61 @@ def jaccard_similarity(detection, groundtruth):
 
 
 def main():
-    prefix = "C:\\Users\\Clark\\Documents\\ubinetlab\\tx_detection\\"
-    prefix += "testFilesEasyToHard\\"
-    trace = "hard"
-    # trace = "Hydroxl3_gain38"
-    testfile = prefix + trace + ".csv"
-    groundtruthfile = prefix + trace + "_groundtruth.csv"
-    spectrogram = pandas.read_csv(testfile, header=None)
-    spectrogram = spectrogram.to_numpy()
+    # prefix = "C:\\Users\\Clark\\Documents\\ubinetlab\\tx_detection\\"
+    # # prefix += "testFilesEasyToHard\\"
+    # # trace = "medium1"
 
-    gt = pandas.read_csv(groundtruthfile, header=None)
-    gt = gt.to_numpy()
+    # snr = "-106"
 
-    fft_size = 1024
-    sample_rate = 1e6    
+    # trace = f"test_file_{snr}_2_{snr}_1_"
 
-    # print("here")
-    detection = detect(spectrogram)
+    # trace_prefix = prefix + f"vary_snr\\snr_{snr}\\"
+    # testfile = trace_prefix + trace + ".csv"
 
-    print(jaccard_similarity(detection, gt))
+    # gt_prefix = prefix + f"vary_snr\\groundtruth\\snr_{snr}\\"
+    # groundtruthfile = gt_prefix + trace + "groundtruth_.csv"
+
+    # spectrogram = pandas.read_csv(testfile, header=None)
+    # spectrogram = spectrogram.to_numpy()
+
+    # gt = pandas.read_csv(groundtruthfile, header=None)
+    # gt = gt.to_numpy()
+
+    # fft_size = 1024
+    # sample_rate = 1e6    
+
+    # # print("here")
+    # detection = detect(spectrogram)
+
+    # print(jaccard_similarity(detection, gt))
 
 
     # main
 
     prefix = "C:\\Users\\Clark\\Documents\\ubinetlab\\tx_detection\\"
 
-    # snrs = [-106, -105, -104, -102, -100, -95, -90]
-    # snrs = [-102]
-    # snr_dict = {snr:list() for snr in snrs}
+    snrs = [-106, -105, -104, -102, -100, -95, -90]
+    snr_dict = {snr:list() for snr in snrs}
 
-    # for snr in snrs:
-    #     for idx in range(1,101):
-    #         testprefix = prefix + f"vary_snr\\snr_{snr}\\"
-    #         groundtruthprefix = prefix + f"vary_snr\\groundtruth\\snr_{snr}\\"
-    #         trace = f"test_file_{snr}_2_{snr}_{idx}_"
-    #         testfile = testprefix + trace + ".csv"
-    #         groundtruthfile = groundtruthprefix + trace + "groundtruth_.csv"
+    for snr in snrs[::-1]:
+        for idx in range(1,101):
+            testprefix = prefix + f"vary_snr\\snr_{snr}\\"
+            groundtruthprefix = prefix + f"vary_snr\\groundtruth\\snr_{snr}\\"
+            trace = f"test_file_{snr}_2_{snr}_{idx}_"
+            testfile = testprefix + trace + ".csv"
+            groundtruthfile = groundtruthprefix + trace + "groundtruth_.csv"
 
-    #         spectrogram, groundtruth = read_spectrogram(testfile, groundtruthfile)
-    #         detection = detect(spectrogram)
-    #         j = jaccard_similarity(detection, groundtruth)
-    #         print(idx, j)
+            spectrogram, groundtruth = read_spectrogram(testfile, groundtruthfile)
+            detection = detect(spectrogram)
+            j = jaccard_similarity(detection, groundtruth)
+            print(idx, j)
 
-    #         snr_dict[snr].append(j)
+            snr_dict[snr].append(j)
 
-    # fig, ax = plt.subplots()
-    # ax.boxplot(snr_dict.values())
-    # ax.set_xticklabels(snr_dict.keys())
-    # plt.show()
+    fig, ax = plt.subplots()
+    ax.boxplot(snr_dict.values())
+    ax.set_xticklabels(snr_dict.keys())
+    plt.show()
 
 if __name__ == "__main__":
     main()
